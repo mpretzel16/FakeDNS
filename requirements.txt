@@ -1,0 +1,6 @@
+scapy
+requests
+numpy==1.19.3
+pandas
+psycopg2
+rich
