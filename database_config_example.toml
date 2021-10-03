@@ -1,0 +1,37 @@
+name = "DNS Server Database Configuration Example"
+# Only use one of the following in the database_config.tml file
+[database]
+database_type = "sqlite"
+database_path = '\full\path\to\database\file.db' # File will be created
+
+[database]
+database_type = "postgresql"
+database_dbapi = 'psycopg2' # Options [default, psycopg2, pg8000] Recommend psycopg2
+database_host = '127.0.0.1'
+database_name = 'myDatabase'
+database_user = 'admin'
+database_password = 'P@55w0rd!'
+
+[database]
+database_type = "mysql" # mysql and mariadb
+database_dbapi = 'mysqldb' # Options [default, mysqldb, pymysql] Recommend mysqldb
+database_host = '127.0.0.1'
+database_name = 'myDatabase'
+database_user = 'admin'
+database_password = 'P@55w0rd!'
+
+[database]
+database_type = "oracle" # Oracle Database
+database_dbapi = 'default' # Options [default, cx_oracle] Recommend default
+database_host = '127.0.0.1'
+database_name = 'myDatabase'
+database_user = 'admin'
+database_password = 'P@55w0rd!'
+
+[database]
+database_type = "mssql" # Microsoft SQL Server
+database_dbapi = 'pyodbc' # Options [pyodbc, pymssql] Recommend pyodbc
+database_host = '127.0.0.1'
+database_name = 'myDatabase'
+database_user = 'admin'
+database_password = 'P@55w0rd!'

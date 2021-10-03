@@ -59,7 +59,6 @@ class PostgresFunctions:
         cursor = None
         try:
             entry_text = str(entry_text).lower()
-            # print("Lookup Authority: {}".format(entry_text))
             cursor = conn.cursor(cursor_factory=RealDictCursor)
             lookup_query = "SELECT bool_authoritative, authoritative_data FROM public.dns_authoritative " \
                            "WHERE entry_text = %s;"

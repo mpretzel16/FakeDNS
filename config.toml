@@ -1,0 +1,12 @@
+name = "DNS Server Database Configuration"
+[database]
+database_type = "postgresql"
+database_dbapi = 'psycopg2' # Options [default, psycopg2, pg8000] Recommend psycopg2
+database_host = '127.0.0.1:5433'
+database_name = 'fakeDNS'
+database_user = 'postgres'
+database_password = '1qaz2wsx!QAZ@WSX'
+
+[dnsServer]
+id = 'ad54cb25-85a1-4809-b144-16e50fd251bb'
+hostname = 'dns.google.com'

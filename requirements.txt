@@ -4,3 +4,6 @@ numpy==1.19.3
 pandas
 psycopg2
 rich
+SQLAlchemy # Required for Datsabase Access
+toml
+mysqlclient
