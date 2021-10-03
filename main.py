@@ -3,6 +3,7 @@ import sys
 from update_networks import UpdateNetworks
 from update_tld import UpdateTLD
 from rich.console import Console
+from dns_server import DNSServer
 console = Console()
 
 
@@ -38,16 +39,14 @@ def setup_args():
 
 
 if __name__ == "__main__":
-    console.rule('[blue]FakeDNS Server - Pretzel Bytes LLC')
+    console.rule('[blue]FakeDNS Server - Michael Pretzel (https://github.com/mpretzel16/FakeDNS/)')
     console.print('[bold]--NOT TO BE USED AS AN INTERNET ATTACHED DNS SERVER, THIS IS FOR TRAINING DNS GENERATION ONLY')
-    console.print('[bold]--Pretzel Bytes LLC takes no responsibility for the use of this software')
+    console.print('[bold]--Michael Pretzel takes no liability for the use of this software or damage from the use of this software')
     args = setup_args()
-    # print(args)
     if args.update_networks:
         UpdateNetworks().start_update(args.update_networks_file)
     if args.update_tld:
         UpdateTLD().start_update(args.update_tld_online, args.update_tld_file)
     if args.run:
-        from dns_server import DNSServer
         dns_server = DNSServer()
         dns_server.run_server()

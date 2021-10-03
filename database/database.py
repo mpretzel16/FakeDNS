@@ -90,14 +90,8 @@ class Database:
         country_name = Column(String(255), nullable=False)
         ccTLD = Column(String(4), nullable=True)
 
-    class Dns_Authoritative(Base):
-        __tablename__ = 'dns_authoritative'
-        __table_args__ = {'extend_existing': True}
-        entry_text = Column(String(255),primary_key=True, nullable=False)
-        bool_authoritative = Column(Boolean(), nullable=False)
-        authoritative_data = Column(Text(), nullable=True)
 
-    class Dns_Entries(Base):
+    class DNSEntry(Base):
         __tablename__ = 'dns_entries'
         __table_args__ = {'extend_existing': True}
         id = Column(Integer(), primary_key=True,autoincrement = True)

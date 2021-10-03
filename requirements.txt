@@ -6,4 +6,3 @@ psycopg2
 rich
 SQLAlchemy # Required for Datsabase Access
 toml
-mysqlclient

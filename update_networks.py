@@ -4,6 +4,7 @@ from shutil import rmtree
 import os
 import pandas as pd
 import psycopg2
+import toml
 from psycopg2 import Error
 import math
 from rich.progress import Progress
@@ -127,7 +128,9 @@ class UpdateNetworks:
             self.db_session.commit()
 
     def start_update(self, str_update_zip_file):
-        self.database = Database()
+        config_path = os.path.join(os.getcwd(), "config.toml")
+        config = toml.load(config_path)
+        self.database = Database(config['database'])
         self.db_session = self.database.Session()
         self.console.print('[purple]Network and Country Update[bold] Starting')
         tmp = tempfile.mkdtemp()

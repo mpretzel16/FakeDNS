@@ -1,14 +1,10 @@
 import os
-
 import toml
-from scapy.layers.dns import DNS, DNSQR, DNSRR, dnsqtypes
+from scapy.layers.dns import DNS, DNSQR
 from socket import AF_INET, SOCK_DGRAM, socket
 from traceback import print_exc
-from postgres_functions import PostgresFunctions
 import threading
-import json
 import time
-from generate_dns_entry import GenerateDnsEntry
 from records import A
 from records import AAAA
 from records import MX
@@ -32,7 +28,6 @@ class DNSServer:
     database: Database
     dict_server_config: dict
     def __init__(self):
-
         self.sock.bind(('0.0.0.0', 53))
         config_path = os.path.join(os.getcwd(), "config.toml")
         config = toml.load(config_path)

@@ -1,13 +1,11 @@
+import os
+import toml
 from rich.progress import Progress
 from rich.console import Console
 import tempfile
-from shutil import rmtree
 import requests
 from os import path
 import pandas as pd
-import psycopg2
-from psycopg2 import Error
-
 from database import Database
 
 
@@ -19,7 +17,9 @@ class UpdateTLD:
     db_session: None
 
     def start_update(self, bool_online_update, str_file_update):
-        self.database = Database()
+        config_path = os.path.join(os.getcwd(), "config.toml")
+        config = toml.load(config_path)
+        self.database = Database(config['database'])
         self.db_session = self.database.Session()
         self.console.print('[red]Top Level Domain Update[bold] Starting')
         if bool_online_update:
@@ -29,7 +29,6 @@ class UpdateTLD:
                 with self.progress:
                     db_update_task = self.progress.add_task("Updating Top Level Domains", total=100)
                     self.database_update(dict_return_start_internet_update['str_file_path'], db_update_task)
-        self.db_session.close()
 
     def start_internet_update(self):
         dict_return = dict()
