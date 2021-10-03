@@ -1,11 +1,7 @@
-import psycopg2
 import sqlalchemy.orm
-
 from random import randint
-import json
 from ip_generation import IpGeneration
 from sqlalchemy import func
-from sqlalchemy import or_
 from database import Database
 
 
@@ -29,33 +25,11 @@ class GenerateDnsEntry:
                 dict_return['bool_error'] = True
                 dict_return['str_status'] = dict_tld_query['str_status']
                 return dict_return
-            lookup_tld = db_session.query(func.count(Database.Tld_Listing.domain))\
+            lookup_tld = db_session.query(func.count(Database.Tld_Listing.domain)) \
                 .filter(Database.Tld_Listing.domain.in_(dict_tld_query['arr_tld'])).scalar()
             if lookup_tld == 0:
                 dict_return['bool_invalid_tld'] = True
                 return dict_return
-            try:
-                dns_authority = Database.Dns_Authoritative()
-                dns_authority.bool_authoritative = True
-                dns_authority.entry_text = entry_text
-                db_session.add(dns_authority)
-                db_session.commit()
-            except sqlalchemy.exc.IntegrityError as exec:
-                if "duplicate" in str(exec).lower():
-                    dict_return['bool_already_exists'] = True
-                    return dict_return
-                else:
-                    dict_return['bool_error'] = True
-                    dict_return['str_status'] = str(exec)
-                    return dict_return
-            except Exception as e:
-                if "duplicate" in str(e).lower():
-                    dict_return['bool_already_exists'] = True
-                    return dict_return
-                dict_return['bool_error'] = True
-                dict_return['str_status'] = str(e)
-                return dict_return
-
             country_to_use: Database.Country_List
             try:
                 result_country_list = db_session.query(Database.Country_List).all()
@@ -70,7 +44,7 @@ class GenerateDnsEntry:
                 return dict_return
             result_ipv4: Database.IPv4_Networks
             try:
-                result_ipv4 = db_session.query(Database.IPv4_Networks)\
+                result_ipv4 = db_session.query(Database.IPv4_Networks) \
                     .filter(Database.IPv4_Networks.country_id == country_to_use.country_id).all()
             except Exception as e:
                 dict_return['bool_error'] = True
@@ -112,12 +86,28 @@ class GenerateDnsEntry:
             ns_dns_entry = Database.Dns_Entries()
             ns_dns_entry.entry_text = entry_text
             ns_dns_entry.record_type = 2
-            ns_dns_entry.record_data = {"server_id": self.dict_server_config['id']}
-            db_session.bulk_save_objects([a_dns_entry, aaa_dns_entry, ptr_a_dns_entry, ptr_aaa_dns_entry, ns_dns_entry])
+            ns_dns_entry.record_data = {"server_id": self.dict_server_config['id'],
+                                        "domain_name": self.dict_server_config['hostname']}
+            ns_a_dns_entry = Database.Dns_Entries()
+            ns_a_dns_entry.entry_text = str_ptr_ipv4
+            ns_a_dns_entry.record_type = 2
+            ns_a_dns_entry.record_data = {"server_id":   self.dict_server_config['id'],
+                                          "domain_name": self.dict_server_config['hostname']}
+            ns_aaaa_dns_entry = Database.Dns_Entries()
+            ns_aaaa_dns_entry.entry_text = str_ptr_ipv6
+            ns_aaaa_dns_entry.record_type = 2
+            ns_aaaa_dns_entry.record_data = {"server_id":   self.dict_server_config['id'],
+                                          "domain_name": self.dict_server_config['hostname']}
+            db_session.bulk_save_objects([a_dns_entry, aaa_dns_entry, ptr_a_dns_entry, ptr_aaa_dns_entry, ns_dns_entry,
+                                          ns_a_dns_entry, ns_aaaa_dns_entry])
             db_session.commit()
             dict_return['ipv4'] = ips['ipv4']
             dict_return['ipv6'] = ips['ipv6']
         except Exception as e:
+            print(e)
+            if "duplicate" in str(e).lower():
+                dict_return['bool_already_exists'] = True
+                return dict_return
             dict_return['bool_error'] = True
             dict_return['str_status'] = str(e)
         return dict_return

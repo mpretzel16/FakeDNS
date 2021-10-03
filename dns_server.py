@@ -23,12 +23,12 @@ class DNSServer:
     conn = None
     arr_processing = []
     a_record: A
-    aaaa_record = AAAA()
-    mx_record = MX()
-    txt_record = TXT()
-    cname_record = CNAME()
-    ptr_record = PTR()
-    ns_record = NS()
+    aaaa_record: AAAA
+    mx_record: MX
+    txt_record: TXT
+    cname_record: CNAME
+    ptr_record: PTR
+    ns_record: NS
     database: Database
     dict_server_config: dict
     def __init__(self):
@@ -42,6 +42,12 @@ class DNSServer:
             exit(1)
         self.dict_server_config = config['dnsServer']
         self.a_record = A(self.dict_server_config)
+        self.aaaa_record = AAAA(self.dict_server_config)
+        self.ns_record = NS(self.dict_server_config)
+        self.mx_record = MX(self.dict_server_config)
+        self.cname_record = CNAME(self.dict_server_config)
+        self.txt_record = TXT(self.dict_server_config)
+        self.ptr_record = PTR(self.dict_server_config)
 
     def handle_request(self, request, address):
         start_time = time.time()
@@ -51,161 +57,27 @@ class DNSServer:
                 self.a_record.handle_request(dns, self.database, address, self.sock)
             elif dns[DNSQR].qtype == 2: # NS Record
                 self.ns_record.handle_request(dns, self.database, address, self.sock)
-            elif dns[DNSQR].qtype == 5:
-                self.cname_record.handle_request(dns, self.conn)
-            elif dns[DNSQR].qtype == 12:
+            elif dns[DNSQR].qtype == 5: # CNAME Record
+                self.cname_record.handle_request(dns, self.database, address, self.sock)
+            elif dns[DNSQR].qtype == 12: # PTR Record
                 self.ptr_record.handle_request(dns, self.database, address, self.sock)
-            elif dns[DNSQR].qtype == 15:
-                self.mx_record.handle_request(dns, self.conn)
-            elif dns[DNSQR].qtype == 16:
-                self.txt_record.handle_request(dns, self.conn, address, self.sock)
+            elif dns[DNSQR].qtype == 15: # MX Record
+                self.mx_record.handle_request(dns, self.database, address, self.sock)
+            elif dns[DNSQR].qtype == 16: # TXT Record
+                self.txt_record.handle_request(dns, self.database, address, self.sock)
             elif dns[DNSQR].qtype == 28: # AAAA Record
                 self.aaaa_record.handle_request(dns, self.database, address, self.sock)
-
-
-            # # Define Postgres Functions
-            # postgres = PostgresFunctions()
-            # # Set DNS Request to a variable
-            # dns = DNS(request)
-            # # Get the ascii string for the DNS request
-            # query = str(dns[DNSQR].qname.decode('ascii'))
-            # if query.lower().endswith('.pretzel1.'):
-            #     response = DNS(id=dns.id, ancount=1, qr=1, rcode=3)
-            #     ans4 = DNSRR(rrname=str(query), type=1)
-            #     response.an = ans4
-            #     self.sock.sendto(bytes(response), addr)
-            #     return True
-            # # Check if this server is Authoritative for this DNS request (It will be 99% of the time)
-            # result_dns_authority = postgres.get_dns_authority(self.conn, str(query))
-            # # Error Checking Authoritative status, do not send a result
-            # if result_dns_authority['bool_error']:
-            #     return False
-            # # Put database results into a variable
-            # arr_data = json.loads(result_dns_authority['data'])
-            # # No data was returned from the SQL query (Non Existent Domain)
-            # if len(arr_data) == 0:
-            #     # We will only auto create records for A and AAA types
-            #     if dns[DNSQR].qtype == 1 or dns[DNSQR].qtype == 28:
-            #         # Generate IPs for A and AAA, add to database
-            #         dict_result_generate_dns_entry = GenerateDnsEntry().start(self.conn, str(query))
-            #         # Error in creating new DNS record, do not send result
-            #         if dict_result_generate_dns_entry['bool_error']:
-            #             return False
-            #         # All set to return generated data
-            #         if not dict_result_generate_dns_entry['bool_already_exists']:
-            #             response = DNS(id=dns.id, ancount=1, qr=1)
-            #             ans4 = DNSRR(rrname=str(query), type=1, rdata=str(dict_result_generate_dns_entry['ipv4']))
-            #             response.an = ans4
-            #             self.sock.sendto(bytes(response), addr)
-            #             return True
-            #         else:  # A record was created before this record could be created. Reference new record
-            #             if dns[DNSQR].qtype == 1:
-            #                 result_dns_entry = postgres.get_dns_record(self.conn, str(query), 1)
-            #                 result_data = json.loads(result_dns_entry['data'])
-            #                 int_total = len(result_data)
-            #                 response = DNS(id=dns.id, ancount=int(int_total), qr=1)
-            #                 if int_total > 0:
-            #                     int_parsed = 0
-            #                     for result in result_data:
-            #                         #print(result)
-            #                         ans = DNSRR(rrname=str(query), type=1, rdata=str(result['record_data']['ip']))
-            #                         if int_parsed == 0:
-            #                             response.an = ans
-            #                         elif int_parsed < int_total:
-            #                             response.an = response.an / ans
-            #                         int_parsed += 1
-            #                 else:
-            #                     ans = DNSRR(rrname=str(query), type=1, rdata=None)
-            #                     response.an = ans
-            #                 self.sock.sendto(bytes(response), addr)
-            #                 return True
-            #             if dns[DNSQR].qtype == 28:
-            #                 result_dns_entry = postgres.get_dns_record(self.conn, str(query), 28)
-            #                 result_data = json.loads(result_dns_entry['data'])
-            #                 int_total = len(result_data)
-            #                 response = DNS(id=dns.id, ancount=int(int_total), qr=1)
-            #                 if int_total > 0:
-            #                     int_parsed = 0
-            #                     for result in result_data:
-            #                         #(result['record_data']['ip'])
-            #                         ans = DNSRR(rrname=str(query), type=28, rdata=str(result['record_data']['ip']))
-            #                         if int_parsed == 0:
-            #                             response.an = ans
-            #                         elif int_parsed < int_total:
-            #                             response.an = response.an / ans
-            #                         int_parsed += 1
-            #                 else:
-            #                     ans = DNSRR(rrname=str(query), type=1, rdata=None)
-            #                     response.an = ans
-            #                 self.sock.sendto(bytes(response), addr)
-            #                 return True
-            # if arr_data[0]['bool_authoritative'] == "1":
-            #     if dns[DNSQR].qtype == 1:
-            #         result_dns_entry = postgres.get_dns_record(self.conn, str(query), 1)
-            #         result_data = json.loads(result_dns_entry['data'])
-            #         int_total = len(result_data)
-            #         response = DNS(id=dns.id, ancount=int(int_total), qr=1)
-            #         if int_total > 0:
-            #             int_parsed = 0
-            #             for result in result_data:
-            #                 #print(result)
-            #                 ans = DNSRR(rrname=str(query), type=1, rdata=str(result['record_data']['ip']))
-            #                 if int_parsed == 0:
-            #                     response.an = ans
-            #                 elif int_parsed < int_total:
-            #                     response.an = response.an / ans
-            #                 int_parsed += 1
-            #         else:
-            #             ans = DNSRR(rrname=str(query), type=1, rdata=None)
-            #             response.an = ans
-            #         self.sock.sendto(bytes(response), addr)
-            #     if dns[DNSQR].qtype == 28:
-            #         result_dns_entry = postgres.get_dns_record(self.conn, str(query), 28)
-            #         result_data = json.loads(result_dns_entry['data'])
-            #         int_total = len(result_data)
-            #         response = DNS(id=dns.id, ancount=int(int_total), qr=1)
-            #         if int_total > 0:
-            #             int_parsed = 0
-            #             for result in result_data:
-            #                 #print(result['record_data']['ip'])
-            #                 ans = DNSRR(rrname=str(query), type=28, rdata=str(result['record_data']['ip']))
-            #                 if int_parsed == 0:
-            #                     response.an = ans
-            #                 elif int_parsed < int_total:
-            #                     response.an = response.an / ans
-            #                 int_parsed += 1
-            #         else:
-            #             ans = DNSRR(rrname=str(query), type=1, rdata=None)
-            #             response.an = ans
-            #         self.sock.sendto(bytes(response), addr)
-            #     if dns[DNSQR].qtype == 12:
-            #         result_dns_entry = postgres.get_dns_record(self.conn, str(query), 12)
-            #         result_data = json.loads(result_dns_entry['data'])
-            #         int_total = len(result_data)
-            #         response = DNS(id=dns.id, ancount=int(int_total), qr=1)
-            #         #print(int_total)
-            #         if int_total > 0:
-            #             int_parsed = 0
-            #             for result in result_data:
-            #                 ans = DNSRR(rrname=str(query), type=12, rdata=str(result['record_data']['domain_name']))
-            #                 if int_parsed == 0:
-            #                     response.an = ans
-            #                 elif int_parsed < int_total:
-            #                     response.an = response.an / ans
-            #                 int_parsed += 1
-            #         else:
-            #             ans = DNSRR(rrname=str(query), type=1, rdata=None)
-            #             response.an = ans
-            #         self.sock.sendto(bytes(response), addr)
-            #         #print("--- %s seconds ---" % (time.time() - start_time))
-            #     return False
-            # #domain, tld, tail = query.rsplit('.', 3)
-            # #assert domain == 'example' and tld == 'com' and tail == ''
-            # #head = head.split('.', 1)[-1]  # drop leading "prefix." part
+            elif dns[DNSQR].qtype == 255: # ANY Record
+                pass
+                #self.aaaa_record.handle_request(dns, self.database, address, self.sock)
+            else:
+                print(dns[DNSQR].qtype)
+                response = DNS(id=dns.id, ancount=0, qr=1)
+                self.sock.sendto(bytes(response), address)
         except Exception as e:
-            print('')
+            print(e)
             print_exc()
-            print('garbage from {!r}? data {!r}'.format(addr, request))
+            print('garbage from {!r}? data {!r}'.format(address, request))
 
 
     def run_server(self):
